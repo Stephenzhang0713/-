@@ -1,0 +1,308 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define maxsize 100
+typedef int datatype;
+typedef struct bnode {
+	datatype data;
+	struct bnode *lchild, *rchild;
+}Bnode, *Btree;
+
+typedef struct snode {
+	Btree data[maxsize];
+	int top;
+}seqstack, *pseqstack;
+
+typedef struct {
+	Btree data[maxsize];
+	int front, rear;
+}seqqueue, *pseqqueue;
+
+pseqstack init(void)
+{
+	pseqstack s;
+	s = (pseqstack)malloc(sizeof(seqstack));
+	if (s)
+		s->top = -1;
+	return s;
+}
+
+int empty(pseqstack s)
+{
+	if (s->top == -1)
+		return 1;
+	else
+		return 0;
+}
+
+void destroy(pseqstack *s)
+{
+	if (*s)
+		free(*s);
+	*s = NULL;
+	return;
+}
+
+int push(pseqstack s, Btree x) {
+	if (s->top == maxsize - 1)
+		return 0;
+	else
+	{
+		s->top++;
+		s->data[s->top] = x;
+	}
+}
+
+int pop(pseqstack s, Btree *x)
+{
+	if (empty(s) && !s)
+		return 0;
+	else
+	{
+		*x = s->data[s->top];
+		s->top--;
+		return 1;
+	}
+}
+pseqqueue init_seqqueue()
+{
+	pseqqueue q;
+	q = (pseqqueue)malloc(sizeof(seqqueue));
+	if (q)
+	{
+		q->rear = 0;
+		q->front = 0;
+	}
+	return q;
+}
+
+int empty_seqqueue(pseqqueue q)
+{
+	if (q&&q->rear == q->front)
+	{
+		return 1;
+	}
+	else
+		return 0;
+}
+
+int in_seqqueue(pseqqueue q, Btree x)
+{
+	if ((q->rear + 1) % maxsize == q->front)
+	{
+		printf("full queue");
+		return -1;
+	}
+	else
+	{
+		q->rear = (q->rear + 1) % maxsize;
+		q->data[q->rear] = x;
+		return 1;
+	}
+}
+
+int out_seqqueue(pseqqueue q, Btree *x)
+{
+	if (empty_seqqueue(q))
+	{
+		printf("empty queue");
+		return -1;
+	}
+	else
+	{
+		q->front = (q->front + 1) % maxsize;
+		*x = q->data[q->front];
+		return 1;
+	}
+}
+Btree CreateBinTree()
+{
+	Btree t;
+	char ch;
+	ch = getchar();
+	if (ch == '#')  t = NULL;
+	else
+	{
+		t = (Bnode *)malloc(sizeof(Bnode));
+		t->data = ch;
+		t->lchild = CreateBinTree();
+		t->rchild = CreateBinTree();
+	}
+	return t;
+}
+
+void PreOrder_recursion(Btree t)
+{
+	if (t)
+	{
+		printf("%c", t->data);
+		PreOrder_recursion(t->lchild);
+		PreOrder_recursion(t->rchild);
+	}
+}
+
+void InOrder_recursion(Btree t)
+{
+	if (t)
+	{
+		InOrder_recursion(t->lchild);
+		printf("%c", t->data);
+		InOrder_recursion(t->rchild);
+	}
+}
+
+
+void PostOrder_recursion(Btree t)
+{
+	if (t)
+	{
+		PostOrder_recursion(t->lchild);
+		PostOrder_recursion(t->rchild);
+		printf("%c", t->data);
+	}
+}
+
+void PreOrder(Btree t)
+{
+	pseqstack s;
+	Btree p = t;
+	s = init();
+	while (p || !empty(s))
+	{
+		if (p)
+		{
+			printf("%c", p->data);
+			push(s, p);
+			p = p->lchild;
+		}
+		else
+		{
+			pop(s, &p);
+			p = p->rchild;
+		}
+	}
+}
+
+void  InOrder(Btree t)
+{
+	pseqstack s;
+	Btree p = t;
+	s = init();
+	while (p || !empty(s))
+	{
+		if (p)
+		{
+			push(s, p);
+			p = p->lchild;
+		}
+		else
+		{
+			pop(s, &p);
+			printf("%c", p->data);
+			p = p->rchild;
+		}
+	}
+}
+
+void PostOrder(Btree t)
+{
+	pseqstack s1, s2;
+	Btree p = t;
+	s1 = init();
+	s2 = init();
+	while (p || !empty(s2))
+	{
+		if (p)
+		{
+			push(s1, p);
+			push(s2, p);
+			p = p->rchild;
+		}
+		else
+		{
+			pop(s2, &p);
+			p = p->lchild;
+		}
+	}
+	while (!empty(s1))
+	{
+		pop(s1, &p);
+		printf("%c", p->data);
+	}
+}
+
+void LevelOrder(Btree t)
+{
+	pseqqueue q;
+	Btree p = t;
+	q = init_seqqueue();
+	if (p)
+		in_seqqueue(q, p);
+	while (!empty_seqqueue(q))
+	{
+		out_seqqueue(q, &p);
+		printf("%c", p->data);
+		if (p->lchild)
+			in_seqqueue(q, p->lchild);
+		if (p->rchild)
+			in_seqqueue(q, p->rchild);
+	}
+	printf("\n");
+}
+main()
+{
+	Btree t;
+	int s, p;
+	printf("请输入二叉树：\n");
+	t = CreateBinTree();
+	do {
+		printf("1.先序，2.中序，3后序，4层序 5退出\n");
+		scanf("%d", &s);
+		switch (s)
+		{
+		case 1:
+			printf("1.递归，2.非递归\n");
+			scanf("%d", &p);
+			switch (p)
+			{
+			case 1:
+				PreOrder_recursion(t);
+				break;
+			case 2:
+				PreOrder(t);
+				break;
+			}
+			break;
+		case 2:
+			printf("1.递归，2.非递归\n");
+			scanf("%d", &p);
+			switch (p)
+			{
+			case 1:
+				InOrder_recursion(t);
+				break;
+			case 2:
+				InOrder(t);
+				break;
+			}
+			break;
+		case 3:
+			printf("1.递归，2.非递归\n");
+			scanf("%d", &p);
+			switch (p)
+			{
+			case 1:
+				PostOrder_recursion(t);
+				break;
+			case 2:
+				PostOrder(t);
+				break;
+			}
+			break;
+		case 4:
+			LevelOrder(t);
+			break;
+		case 5:
+			break;
+		}
+	} while (s != 5);
+}
